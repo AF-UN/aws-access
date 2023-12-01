@@ -1,4 +1,5 @@
 import random
+import boto3
 
 chars = "abcdefghijklmnopqrstuvwxyz0123456789/+"
 regions = [
@@ -53,5 +54,52 @@ def generate_access():
     """
     aws_key = generate_aws_key()
     aws_id = generate_aws_id()
-    aws_region = generate_aws_region
+    aws_region = generate_aws_region()
     return aws_key, aws_id, aws_region
+
+
+def generate_multiple_access(num_of_keys):
+    """
+    Generated a certain number of keys.
+
+    Args:
+        num_of_keys (int): number of keys to generate.
+
+    Returns:
+        list: list of all access keys.
+    """
+    access_keys = []
+    for x in range(0, num_of_keys):
+        key, aws_id, region = generate_access()
+        access_keys.append([key, aws_id, region, x])
+    return access_keys
+
+
+def check_access_key(key_creds):
+    """
+    Returns whether or not the aws key and id are valid.
+
+    Args:
+        key_creds (list): has aws key and aws id.
+
+    Returns:
+        list: the credentials and whether they are valid.
+    """
+    session = boto3.Session(
+        aws_access_key_id=key_creds[1],
+        aws_secret_access_key=key_creds[0],
+        region_name="us-east-1"
+    )
+    print("Key creds:", key_creds, "\n", key_creds[1], key_creds[0])
+
+    try:
+        sess = session.client('sts')
+        print("Session Account:", sess.get_caller_identity().get('Account'))
+        key_creds.append("valid")
+        return key_creds
+    except KeyboardInterrupt:
+        exit()
+    except Exception as e:
+        print("Session:", e)
+        key_creds.append("invalid")
+        return key_creds
